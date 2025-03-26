@@ -1,6 +1,6 @@
 ---
 title: "Climate Change Module"
-author: 'Add name'
+author: 'Zyaire Bayne'
 format:
   html:
     embed-resources: true
@@ -8,6 +8,7 @@ format:
 
 ```{r message=FALSE}
 library(tidyverse)
+library(ggplot2)
 ```
 
 ## Warm-up: Examining CO2 trends in R
@@ -44,13 +45,26 @@ ggplot(co2, aes(x = decimal_date, y = monthly_average)) +
 Describe the overall trend in the CO2 data.
 
 **Answer 1:**
-
+There is an overall postive trend in the CO2 data, as time has progressed the CO2 levels have increased.
 **Question 2:**
 
 How does CO2 vary within a year?  What month is it at max?  Min?  What might explain this sub-annual pattern? (you will need to write code and make a plot to answer this question)
 
 **Answer 2:**
+```{r}
+co2 |>
+  summarise( max_monthly_average = max(monthly_average))
+co2 |>
+  summarise( min_monthly_average = min(monthly_average))
+```
+During February, the monthly average was at its max for this dataset.
 
+```{r}
+co2 |>
+  group_by(year, month, monthly_average)|>
+  summarise()
+
+```
 
 
 ## Global Temperature Data
@@ -66,9 +80,14 @@ Data from: <https://climate.nasa.gov/vital-signs/global-temperature/>
 Describe the data set to the best of your ability, given the documentation provided. 
 
 - Where is the data from?
+  the data is from NASA online data base
+  
 - Describe the class of each column and what units it is measured in. 
+   this data set has 3 columns, the first being Year followed by No_smoothing and lowess
+   
 - What is the difference between "global temperature" and "global temperature anomaly"? 
-
+  How much warmer than average the most recent year was globally
+  
 **Answer 3:**
 
 
@@ -79,12 +98,34 @@ Construct the necessary R code to import and prepare for plotting the following 
 You'll need to determine the file's delimiter and any comments or skips. You will also need to be sure that you have column names. You will not directly use the code above to read the CO2 data, but that code provides helpful tips for reading the data.
 
 **Answer 4:**
+```{r}
+q4 <- read_table("https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt", 
+                  comment="#",
+                  col_names = c("year", "No_Smoothing", "Lowess(5)"))
+q4 <- q4[-c(1:4),]
+                  
+
+```
 
 **Question 5:**
 
 Plot the trend in global mean temperatures over time.  Describe what you see in the plot and how you interpret the patterns you observe.
 
 **Answer 5:**
+```{r}
+q4$year <- as.numeric(q4$year)
+q4$No_Smoothing <- as.numeric(q4$No_Smoothing)
+
+ggplot(q4, aes(x = year, y = No_Smoothing)) + 
+  geom_point()+
+  scale_x_continuous(breaks = seq(min(q4$year), max(q4$year), by = 10)) + 
+  scale_y_continuous(breaks = seq(min(q4$No_Smoothing), max(q4$No_Smoothing), length.out = 5)) 
+  
+  
+
+```
+It appears that after the 1970s, the average meean has been steadily increasing every year. This could be due to the rising concers of global population causing global warming.
+
 
 ## Evaluating the evidence for a "Pause" in warming?
 
@@ -97,6 +138,7 @@ You will use rolling averages to help you explore the evidence for a pause. Sinc
 Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a rolling average in R. What search term or chat LLM prompt did you use?  What website or answer from the chat LLM did you end up using?  How much did you need to modify the code from the website or chat LLM to answer the question successfully?
 
 **Answer 6:**
+I searched best way to compute rolling mean in R. I then used the website stackover flow. I only needed to plug in my data frame and the accompanying data columns to make the code work for the question. The function for roll mean comes from the zoo package.
 
 **Question 7:**
 
@@ -105,12 +147,29 @@ Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a 
 
 **Answer 7:**
 
+```{r}
+
+library(zoo)
+q7_5 <- q4 |>
+  mutate(rollingmean5 = rollmean(q4$No_Smoothing, k = 5, fill = NA))|>
+  mutate(rollingmean10 = rollmean(q4$No_Smoothing, k = 10, fill = NA))|>
+  mutate(rollingmean20 = rollmean(q4$No_Smoothing, k = 20, fill = NA))
+```
 **Question 8:**
 
 Plot the different averages on the *same plot* and describe what differences you see and why.  
 
 **Answer 8:**
+As the running average years increase, the line smoothes out. this is due to the fact that higher running averages are using more data for their calculation causing the points to show less variation in the data.
 
+```{r}
+ggplot(q7_5, aes(x = year, y = No_Smoothing))+
+  geom_point()+
+ geom_line(aes(y = rollingmean5), color = "blue")+
+  geom_line(aes(y = rollingmean10), color = "red")+
+  geom_line(aes(y = rollingmean20), color = "green")+
+  labs(color = "Legend")
+```
 **Question 9:**
 
 By examining the data here, what evidence do you find or not find for such a pause? 
@@ -147,12 +206,19 @@ The broad question is: how do recent atmospheric CO2 levels compare to historica
 Your answer to Question 10 is going to be a mix of code chunks and text that you put below in "Answer 10:"
 
 - Describe the data set: what are the columns and units? Where do the numbers come from? 
-- What is the temporal resolution of the data? 
-- Read in and prepare data for analysis.   
+
+- What is the temporal resolution of the data?
+
+- Read in and prepare data for analysis. 
+
 - Reverse the ordering to create a chronological record so that each measurement is associcated with calender year.
-- Plot data.  
+
+- Plot data.
+
 - Combine this time series with the Mauna Loa data (the Warm-up exercise in this assignment).  You will use "bind_rows()".
-- Plot the combined data. (the most recent time period must be on the right side of the plot).        
+
+- Plot the combined data. (the most recent time period must be on the right side of the plot).
+
 - Describe your conclusions to the question "How do recent atmospheric CO2 levels compare to historical levels?" using your plot as supporting evidence.   
 
 **Answer 10:**
