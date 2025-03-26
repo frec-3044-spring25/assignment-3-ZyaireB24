@@ -224,10 +224,35 @@ Your answer to Question 10 is going to be a mix of code chunks and text that you
 **Answer 10:**
 
 ```{r}
+vstk <- read.table("vostok.icecore.co2", skip = 20)
+colnames(vstk)[1:4] <- c("Depth(m)", "year", "Avg Ice Age", "No_Smoothing")
 
+vstk <- vstk |>
+  arrange(desc(`year`))
+
+ggplot(vstk, aes(x = `year`, y = `No_Smoothing`))+
+  geom_point()
+```
+```{r}
+
+q10 <- bind_rows(q4, vstk)
+q10 <- q10 |>
+  arrange(desc(`year`))
+
+
+ggplot(q10, aes(x = year, y = No_Smoothing))+
+  geom_point()+
+  scale_x_reverse()+
+  labs(
+    x = "Year",
+    y = "CO2 Concentration"
+  )
 
 ```
-
+   As seen in the graph above, the amount of CO1 concentraition has had a server decrease in the recent history. This is most likely caused by humnan involvment in the world.
+   
+   
+   
 # Render and committing
 
 Remember to Render your document as HTML and comment+push to GitHub your code and rendered HTML that was created when you knitted the document.  Your GitHub repository should have multiple commits with informative commit messages.
